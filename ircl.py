@@ -46,8 +46,6 @@ class IRCL:
                         self.resolve(self.rtable[self.run[j]], self.rtable[self.run[n]])
                         j += 1
                     
-                    # if self.run_s[j] <= self.run_e[n] - N + 1 and (self.run_e[n] - N + 1) % N:
-                    #     self.resolve(self.rtable[self.run[j]], self.rtable[self.run[n]])
                     if (self.run_e[n] + 1) % N:
                         if self.run_s[j] <= self.run_e[n] - N + 1:
                             self.resolve(self.rtable[self.run[j]], self.rtable[self.run[n]])
@@ -77,8 +75,7 @@ class IRCL:
     def vis_run_ccl(self, img, dest_path):
         M, N = img.shape
         p = img.flatten()
-        curr_p = img.flatten()
-        curr_p[curr_p == 1] = -1
+        p[p == 1] = -1
         n = j = 0
         l = 1
 
@@ -94,7 +91,7 @@ class IRCL:
         out_image = res_flat.reshape((M, N, 3))
 
         for label in color_code:
-            res_flat[curr_p == label] = color_code[label]
+            res_flat[p == label] = color_code[label]
 
         idx = save_image(out_image, dest_path, idx)
 
@@ -121,12 +118,12 @@ class IRCL:
                     j += 1
                 if self.run_e[j] <= self.run_e[n] - N:
                     self.run.append(self.run[j])
-                    curr_p[self.run_s[-1]:self.run_e[-1]+1] = self.run[-1]
+                    p[self.run_s[-1]:self.run_e[-1]+1] = self.run[-1]
 
                     for label in color_code:
                         if label in [0, -1]:
                             continue
-                        res_flat[curr_p == label] = color_code[label]
+                        res_flat[p == label] = color_code[label]
 
                     idx = save_image(out_image, dest_path, idx)
 
@@ -134,35 +131,18 @@ class IRCL:
 
                     while self.run_e[j] <= self.run_e[n] - N:
                         self.resolve(self.rtable[self.run[j]], self.rtable[self.run[n]])
-                        for s, e, r in zip(self.run_s, self.run_e, self.run):
-                            for k in range(s, e+1):
-                                curr_p[k] = self.rtable[r]
-
-                        for label in color_code:
-                            if label in [0, -1]:
-                                continue
-                            res_flat[curr_p == label] = color_code[label]
-
-                        idx = save_image(out_image, dest_path, idx)
                         j += 1
                     
                     if (self.run_s[j] <= self.run_e[n] - N + 1 and (self.run_e[n] + 1) % N) or (self.run_s[j] <= self.run_e[n] - N and (self.run_e[n] + 1) % N == 0):
                         self.resolve(self.rtable[self.run[j]], self.rtable[self.run[n]])
 
-                        for s, e, r in zip(self.run_s, self.run_e, self.run):
-                            for k in range(s, e+1):
-                                curr_p[k] = self.rtable[r]
-
-                        for label in color_code:
-                            res_flat[curr_p == label] = color_code[label]
-
-                        idx = save_image(out_image, dest_path, idx)
                 elif (self.run_s[j] <= self.run_e[n] - N + 1 and (self.run_e[n] + 1) % N) or (self.run_s[j] <= self.run_e[n] - N and (self.run_e[n] + 1) % N == 0):
                     self.run.append(self.run[j])
-                    curr_p[self.run_s[-1]:self.run_e[-1]+1] = self.run[-1]
+                    p[self.run_s[-1]:self.run_e[-1]+1] = self.run[-1]
 
                     for label in color_code:
-                        res_flat[curr_p == label] = color_code[label]
+                        if label not in [0, -1]:
+                            res_flat[p == label] = color_code[label]
 
                     idx = save_image(out_image, dest_path, idx)
                 else:
@@ -172,23 +152,40 @@ class IRCL:
                     self.tail.append(l)
                     assign_color_code(color_code, l)
 
-                    curr_p[self.run_s[-1]:self.run_e[-1]+1] = l
+                    p[self.run_s[-1]:self.run_e[-1]+1] = l
                     
                     for label in color_code:
-                        res_flat[curr_p == label] = color_code[label]
+                        if label not in [0, -1]:
+                            res_flat[p == label] = color_code[label]
 
                     idx = save_image(out_image, dest_path, idx)
 
-                    # color_code[]
                     l += 1
 
                 n += 1
             else:
+                res_flat[i] = mask_color
+
+                idx = save_image(out_image, dest_path, idx)
+
+                res_flat[i] = color_code[0]
+
                 i += 1
 
         for s, e, r in zip(self.run_s, self.run_e, self.run):
             for j in range(s, e+1):
+                res_flat[j] = mask_color
+
+                idx = save_image(out_image, dest_path, idx)
+
+                p2s = p[j] != self.rtable[r]
+
                 p[j] = self.rtable[r]
+
+                res_flat[j] = color_code[p[j]]
+
+                if p2s:
+                    idx = save_image(out_image, dest_path, idx)
         
         end_time = timer()
 

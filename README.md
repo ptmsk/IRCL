@@ -12,6 +12,11 @@ This repo is based on the pseudo code of [The Improved Run-based Connected-compo
 - **Run-length encoding**
 - **Raster scan**
 
+## Algorithm phases
+
+- **First pass**: Traverse the pixel one by one in the order of raster scanning direction. If the pixel is the object pixel, do the labeling task and resolve equivalence. After this step, the equivalent label sets are updated.
+- **Second pass**: Update the object pixel belonging to each run by the run's representative label. This algorithm just scans through the run data so the background pixels are only scanned once.
+
 ## Run
 
 ### Requirements
